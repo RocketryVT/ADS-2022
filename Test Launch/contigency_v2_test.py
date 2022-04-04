@@ -141,6 +141,15 @@ def main():
 		SDwrit(status)
 		print(status)
 
+		######################################
+		y = input("next status? y/n: "):
+		if y == 'y':
+			if status is Vehicle_Status.APOGEE:
+				return
+			status += 1
+		######################################
+
+
 		acceleration = imu.acceleration
 		z_a = acceleration[2]
 		previous_altitude = altitude
