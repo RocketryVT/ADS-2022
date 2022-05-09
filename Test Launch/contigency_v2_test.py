@@ -17,20 +17,25 @@ class Vehicle_Status(Enum):
 ##########################
 ## launch day to-do
 pad_pressure = 102250
-launch_date = "04-04-2022"
+launch_date = "04-09-2022"
 ##########################
 # 3.44s -- burn phase
 # 12.86s -- coast phase
 time_bo = 4
 time_apo = 13
+time_end = 120
 
 ## constants
 g0 = 9.8066
 # /mnt/SD/ is the mount point of the SD card
 savePath = '/mnt/SD/'
 fileName = "DataLog_"+launch_date+".txt"
+SD = False
+if not SD:
+	savePath = '/home/debian'
+
 # threshold limits
-boost_a_threshold = 4
+boost_a_threshold = 2
 glide_a_threshold = -0.9
 # angle limits
 MAX_ANGLE = 120
@@ -90,7 +95,7 @@ def init():
 
 def SDwrite(string):
 	log_time = time.time() - start_time
-	file.write("{0:0.3f}".format(log_time) + " after PS: ")
+	file.write("{0:0.3f}".format(log_time) + ": ")
 	file.write(string + "\n")
 
 
@@ -98,7 +103,7 @@ def alti_initialize(init_start_time):
 
 	count_altitude_read = 0
 	average_altitude = 0
-	while (count_altitude_read == 100):
+	while (count_altitude_read < 100):
 		# on pad average altitude
 		altitude = altimeter.altitude
 		if count_altitude_read == 0 or count_altitude_read < 100:
@@ -108,6 +113,9 @@ def alti_initialize(init_start_time):
 			average_altitude = (average_altitude * (count_altitude_read - 1)\
 			 + altitude)/count_altitude_read
 
+			print(average_altitude)
+
+	SDwrite("\n\npad altitude initialization complete - {0:0.3f}\n".format(average_altitude))
 	print("\n\npad altitude initialization complete - {0:0.3f}\n".format(average_altitude))
 	alti_init_time = time.time() - init_start_time
 	return average_altitude
@@ -138,16 +146,24 @@ def main():
 
 	while (status is not Vehicle_Status.DONE):
 
-		SDwrit(status)
+		SDwrite(status.name)
 		print(status)
 
-		######################################
-		y = input("next status? y/n: "):
-		if y == 'y':
-			if status is Vehicle_Status.APOGEE:
-				return
-			status += 1
-		######################################
+		# ######################################
+
+		# y = input("next status? y/n: ")
+		# if y == 'y':
+		# 	if status is Vehicle_Status.APOGEE:
+		# 		return
+		# 	elif status is Vehicle_Status.ON_PAD:
+		# 		liftoff_time = time.time()
+		# 		status = Vehicle_Status.BOOST
+		# 	elif status is Vehicle_Status.BOOST:
+		# 		status = Vehicle_Status.GLIDE
+		# 	elif status is Vehicle_Status.GLIDE:
+		# 		status = Vehicle_Status.APOGEE
+				
+		# ######################################
 
 
 		acceleration = imu.acceleration
@@ -157,8 +173,9 @@ def main():
 
 		if status is Vehicle_Status.ON_PAD:
 
-			if (z_a >= boost_a_threshold * g0 and altitude >= 5):
+			if (z_a >= boost_a_threshold * g0 and altitude >= 5 + on_PAD_altitude):
 				liftoff_time = time.time()
+				SDwrite("\n\nLift Off Mark\n\n")
 				status = Vehicle_Status.BOOST
 				continue
 
@@ -198,7 +215,6 @@ def main():
 		duty = 100 - ((angle_f / 180) * duty_span + duty_min)
 		PWM.set_duty_cycle(servoPin, duty)
 
-
 		SDwrite("Altitude: {0:0.3f} meter".format(altitude))
 		SDwrite("Servo Angle: {0:0.3f} degree".format(deployment))
 		SDwrite("Acceleration: X:%.2f, Y: %.2f, Z: %.2f m/s^2" % (acceleration))
@@ -208,7 +224,7 @@ def main():
 		print("Servo Angle: {0:0.3f} degree".format(deployment))
 		print("Acceleration: X:%.2f, Y: %.2f, Z: %.2f m/s^2" % (acceleration))
 		print("Gyro X:%.2f, Y: %.2f, Z: %.2f radians/s" % (imu.gyro))
-		print(on_PAD_altitude)
+		print(deployment)
 		print()
 		time.sleep(0.1)
 
