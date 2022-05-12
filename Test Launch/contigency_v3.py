@@ -229,8 +229,11 @@ def actuation_plan(status):
 
 	global altimeter
 
+	deployment = deploy_percentage_to_angle(0)
+
 	if (not imu_fail and not alti_fail and not atti_fail):
 
+		## custmized based on missions
 		if status is Vehicle_Status.GLIDE:
 
 			deployment = deploy_percentage_to_angle(100)
@@ -240,8 +243,7 @@ def actuation_plan(status):
 			deployment = deploy_percentage_to_angle(0)
 
 	else:
-		deployment = deploy_percentage_to_angle(INIT_DEPLOYMENT)
-
+		
 		if alti_fail:
 			altimeter = altimeter_set(i2c)
 			SDwrite("altimeter reset attempt")
@@ -251,6 +253,8 @@ def actuation_plan(status):
 			imu = imu_set(i2c)
 			SDwrite("imu reset attempt")
 			print("imu reset attempt")
+
+	return deployment
 
 
 def main():
@@ -269,12 +273,17 @@ def main():
 		SDwrite(str(err))
 
 	## altimeter initial reading and altitude setup
+	on_PAD_altitude = 0
+	on_PAD_fail = False
 	if not alti_Setup_fail:
 
 		try:
 			on_PAD_altitude = alti_initialize(time.time())
+
 		except Exception as err:
 			SDwrite(str(err))
+
+			on_PAD_fail = True
 
 	previous_altitude = 0
 	altitude = 0
@@ -335,6 +344,9 @@ def main():
 
 			try:
 				altitude = altimeter.altitude
+				if not on_PAD_fail:
+					on_PAD_altitude = altitude
+					on_PAD_altitude = False
 
 				alti_fail = False
 
@@ -373,8 +385,7 @@ def main():
 					status = Vehicle_Status.DONE
 
 			attitude_safe(euler_angle)
-			actuation_plan(status)
-			servo_actuate(deployment)
+			deployment = actuation_plan(status)
 		
 		else:
 
@@ -391,6 +402,9 @@ def main():
 				SDwrite("imu reset attempt")
 				print("imu reset attempt")
 
+			deployment = deploy_percentage_to_angle(INIT_DEPLOYMENT)
+
+		servo_actuate(deployment)
 		output(altitude, deployment, acceleration, gyro, euler_angle)
 
 		time.sleep(0.1)
