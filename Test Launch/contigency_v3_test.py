@@ -122,6 +122,8 @@ def SDwrite(string):
 
 def alti_initialize(init_start_time):
 
+	time.sleep(5)
+
 	count_altitude_read = 0
 	average_altitude = 0
 
@@ -140,6 +142,7 @@ def alti_initialize(init_start_time):
 	SDwrite("pad altitude initialization complete - {0:0.3f}".format(average_altitude))
 	print("pad altitude initialization complete - {0:0.3f}".format(average_altitude))
 	alti_init_time = time.time() - init_start_time
+
 	return average_altitude
 
 
@@ -352,9 +355,9 @@ def main():
 
 			try:
 				altitude = altimeter.altitude
-				if not on_PAD_fail:
+				if on_PAD_fail:
 					on_PAD_altitude = altitude
-					on_PAD_altitude = False
+					on_PAD_fail = False
 
 				alti_fail = False
 
@@ -371,7 +374,7 @@ def main():
 
 			if status is Vehicle_Status.ON_PAD:
 
-				if (z_a >= boost_a_threshold * g0 and altitude >= boost_height_threshold + on_PAD_altitude) or time.time() - start_time >= 60:
+				if (z_a >= boost_a_threshold * g0 and altitude >= boost_height_threshold + on_PAD_altitude) or time.time() - start_time >= 40:
 					liftoff_time = time.time()
 					SDwrite("\n\nLift Off Mark at -- {0:0.3f}\n\n".format(liftoff_time - start_time))
 					status = Vehicle_Status.BOOST
@@ -393,6 +396,8 @@ def main():
 
 			elif status is Vehicle_Status.APOGEE:
 
+				print(100 + on_PAD_altitude)
+				print(altitude <= 100 + on_PAD_altitude)
 				if (altitude <= 100 + on_PAD_altitude):
 					status = Vehicle_Status.DONE
 

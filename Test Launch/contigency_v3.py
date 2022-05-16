@@ -18,7 +18,7 @@ class Vehicle_Status(Enum):
 ##################################
 ## launch day to-do
 pad_pressure = 102250
-launch_date = "05-07-2022"
+launch_date = "05-19-2022"
 ##################################
 # 3.44s -- burn phase
 # 12.86s -- coast phase
@@ -121,6 +121,8 @@ def SDwrite(string):
 
 
 def alti_initialize(init_start_time):
+
+	time.sleep(1)
 
 	count_altitude_read = 0
 	average_altitude = 0
@@ -313,22 +315,6 @@ def main():
 		SDwrite(status.name)
 		print(status)
 
-		# ######################################
-
-		# y = input("next status? y/n: ")
-		# if y == 'y':
-		# 	if status is Vehicle_Status.APOGEE:
-		# 		return
-		# 	elif status is Vehicle_Status.ON_PAD:
-		# 		liftoff_time = time.time()
-		# 		status = Vehicle_Status.BOOST
-		# 	elif status is Vehicle_Status.BOOST:
-		# 		status = Vehicle_Status.GLIDE
-		# 	elif status is Vehicle_Status.GLIDE:
-		# 		status = Vehicle_Status.APOGEE
-				
-		# ######################################
-
 		if not imu_Setup_fail:
 
 			try:
@@ -352,9 +338,9 @@ def main():
 
 			try:
 				altitude = altimeter.altitude
-				if not on_PAD_fail:
+				if on_PAD_fail:
 					on_PAD_altitude = altitude
-					on_PAD_altitude = False
+					on_PAD_fail = False
 
 				alti_fail = False
 
@@ -371,7 +357,7 @@ def main():
 
 			if status is Vehicle_Status.ON_PAD:
 
-				if (z_a >= boost_a_threshold * g0 and altitude >= boost_height_threshold + on_PAD_altitude): # for testing or time.time() - start_time >= 60:
+				if (z_a >= boost_a_threshold * g0 and altitude >= boost_height_threshold + on_PAD_altitude): # for testing or time.time() - start_time >= 40:
 					liftoff_time = time.time()
 					SDwrite("\n\nLift Off Mark at -- {0:0.3f}\n\n".format(liftoff_time - start_time))
 					status = Vehicle_Status.BOOST
