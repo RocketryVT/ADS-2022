@@ -42,7 +42,7 @@ boost_height_threshold = 20
 glide_a_threshold = -0.9
 
 # angle limits
-MAX_ANGLE = 90
+MAX_ANGLE = 60
 MIN_ANGLE = 0
 
 # altimeter initialization count limit
@@ -292,6 +292,7 @@ def main():
 
 			on_PAD_fail = True
 
+	apogee_altitude = 0
 	previous_altitude = 0
 	altitude = 0
 	alti_fail = False
@@ -365,11 +366,14 @@ def main():
 
 		if (not alti_Setup_fail and not imu_Setup_fail):
 
+			if apogee_altitude < altitude:
+				apogee_altitude = altitude
+
 			if status is Vehicle_Status.ON_PAD:
 
 				if (z_a >= boost_a_threshold * g0 and altitude >= boost_height_threshold + on_PAD_altitude) or time.time() - start_time >= 60:
 					liftoff_time = time.time()
-					SDwrite("\n\nLift Off Mark at -- {0:0.3f}\n\n".format(liftoff_time))
+					SDwrite("\n\nLift Off Mark at -- {0:0.3f}\n\n".format(liftoff_time - start_time))
 					status = Vehicle_Status.BOOST
 				
 				# reset initial deployment
@@ -383,7 +387,7 @@ def main():
 
 			elif status is Vehicle_Status.GLIDE:
 
-				if (altitude < previous_altitude or time.time() -liftoff_time >= time_bo + time_apo):
+				if (altitude < apogee_altitude - 1 or time.time() -liftoff_time >= time_bo + time_apo):
 					status = Vehicle_Status.APOGEE
 
 			elif status is Vehicle_Status.APOGEE:
