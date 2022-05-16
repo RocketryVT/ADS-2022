@@ -367,7 +367,7 @@ def main():
 
 			if status is Vehicle_Status.ON_PAD:
 
-				if (z_a >= boost_a_threshold * g0 and altitude >= boost_height_threshold + on_PAD_altitude):
+				if (z_a >= boost_a_threshold * g0 and altitude >= boost_height_threshold + on_PAD_altitude) or time.time() - start_time >= 60:
 					liftoff_time = time.time()
 					SDwrite("\n\nLift Off Mark at -- {0:0.3f}\n\n".format(liftoff_time))
 					status = Vehicle_Status.BOOST
