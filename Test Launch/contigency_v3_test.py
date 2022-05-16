@@ -387,8 +387,9 @@ def main():
 
 			elif status is Vehicle_Status.GLIDE:
 
-				if (altitude < apogee_altitude - 1 or time.time() -liftoff_time >= time_bo + time_apo):
+				if (altitude < apogee_altitude - 5 or time.time() -liftoff_time >= time_bo + time_apo):
 					status = Vehicle_Status.APOGEE
+					SDwrite("APO: {0:0.2f}".format(apogee_altitude))
 
 			elif status is Vehicle_Status.APOGEE:
 
